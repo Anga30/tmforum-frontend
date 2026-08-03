@@ -1,0 +1,53 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [main, "feat/**", "bugfix/**"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate-branch-name:
+    name: Validate branch name
+    if: github.event_name == 'pull_request' || github.ref_name != 'main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Enforce feature and bug-fix branch prefixes
+        env:
+          BRANCH_NAME: ${{ github.event.pull_request.head.ref || github.ref_name }}
+        run: |
+          if [[ ! "$BRANCH_NAME" =~ ^(feat|bugfix)/[a-z0-9]+(-[a-z0-9]+)*$ ]]; then
+            echo "Invalid branch name: $BRANCH_NAME"
+            echo "Use feat/<kebab-case-description> or bugfix/<kebab-case-description>."
+            exit 1
+          fi
+
+  quality:
+    name: Build, lint, and audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Check high and critical dependency vulnerabilities
+        run: npm audit --audit-level=high
