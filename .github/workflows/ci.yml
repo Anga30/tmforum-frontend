@@ -51,3 +51,21 @@ jobs:
 
       - name: Check high and critical dependency vulnerabilities
         run: npm audit --audit-level=high
+
+      - name: Print npm debug log on failure
+        if: failure()
+        shell: bash
+        run: |
+          shopt -s nullglob
+          npm_logs=("$HOME"/.npm/_logs/*-debug-0.log)
+
+          if (( ${#npm_logs[@]} == 0 )); then
+            echo "No npm debug log was created."
+            exit 0
+          fi
+
+          for npm_log in "${npm_logs[@]}"; do
+            echo "::group::$(basename "$npm_log")"
+            cat "$npm_log"
+            echo "::endgroup::"
+          done
