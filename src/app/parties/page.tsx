@@ -1,0 +1,8 @@
+"use client";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useAdminSessionGuard } from "@/hooks/use-admin-session-guard";
+import { listParties } from "@/lib/party-api";
+import type { Party } from "@/types/party.types";
+
+export default function PartiesPage() { const { session, accessToken, isLoading } = useAdminSessionGuard(); const [parties, setParties] = useState<Party[]>([]); const [error, setError] = useState(""); useEffect(() => { if (accessToken) void Promise.all([listParties("INDIVIDUAL", accessToken), listParties("ORGANIZATION", accessToken)]).then((items) => setParties(items.flat())).catch((e: Error) => setError(e.message)); }, [accessToken]); if (isLoading || !session) return <main className="page-shell"><p>Checking your session...</p></main>; return <main className="page-shell"><Link className="back-link" href="/">Back</Link><div className="page-intro"><p className="eyebrow">Party management</p><h1>Individuals and organizations</h1><p>Create parties, monitor verification, and manage their information.</p></div><Link href="/parties/new">Create party</Link>{error && <p className="error">{error}</p>}<section className="party-list">{parties.map((party) => <article className="party-card" key={party.id}><p className="eyebrow">{party.partyType}</p><h2><Link href={`/parties/${party.id}?type=${party.partyType}`}>{party.individual?.displayName ?? party.organization?.legalName}</Link></h2><p>{party.email?.value}</p><span>{party.status.replaceAll("_", " ")}</span></article>)}{!error && !parties.length && <p className="field-help">No parties have been created yet.</p>}</section></main>; }

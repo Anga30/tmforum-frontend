@@ -1,0 +1,3 @@
+export type PartyType = "INDIVIDUAL" | "ORGANIZATION";
+export type Party = { id: string; partyType: PartyType; status: string; individual?: { givenName: string; middleName?: string | null; familyName: string; displayName: string; birthDate?: string | null; gender?: string | null; nationality?: string | null }; organization?: { legalName: string; tradingName?: string | null; organizationType?: string | null }; email?: { value: string; verificationStatus?: string | null }; phone?: { value: string }; address?: { value: string } };
+export type PartyInput = Record<string, string> & { email: string; phone?: string; address?: string };
