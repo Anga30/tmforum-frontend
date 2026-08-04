@@ -7,8 +7,10 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { ConfirmationModal } from "@/components/feedback/confirmation-modal";
 import { OutcomeModal } from "@/components/feedback/outcome-modal";
 import { useAdminSessionGuard } from "@/hooks/use-admin-session-guard";
-import { deleteParty, getParty, suspendParty, unsuspendParty, updateParty } from "@/lib/party-api";
-import type { Party, PartyType } from "@/types/party.types";
+import { assignPartyRole, deleteParty, getParty, getPartyRoles, revokePartyRole, suspendParty, unsuspendParty, updateParty } from "@/lib/party-api";
+import { listRoles } from "@/lib/access-control-api";
+import type { Role } from "@/types/access-control.types";
+import type { Party, PartyRoleData, PartyType } from "@/types/party.types";
 
 type Outcome = {
   variant: "success" | "error";
@@ -18,7 +20,7 @@ type Outcome = {
   returnToPartyList?: boolean;
 };
 
-type ConfirmationAction = "DELETE" | "SUSPEND" | "UNSUSPEND";
+type ConfirmationAction = "DELETE" | "SUSPEND" | "UNSUSPEND" | "REVOKE_ROLE";
 
 export default function PartyDetailPage() {
   const params = useParams<{ partyId: string }>();
@@ -30,12 +32,24 @@ export default function PartyDetailPage() {
   const [outcome, setOutcome] = useState<Outcome>();
   const [confirmationAction, setConfirmationAction] = useState<ConfirmationAction>();
   const [actionReason, setActionReason] = useState("");
+  const [partyRoleData, setPartyRoleData] = useState<PartyRoleData>({ roles: [], effectivePermissions: [] });
+  const [availableRoles, setAvailableRoles] = useState<Role[]>([]);
+  const [roleIdToAssign, setRoleIdToAssign] = useState("");
+  const [assignmentIdToRevoke, setAssignmentIdToRevoke] = useState("");
 
   useEffect(() => {
     if (accessToken && type) {
       void getParty(type, params.partyId, accessToken)
         .then(setParty)
         .catch((error: Error) => setPageError(error.message));
+    }
+  }, [accessToken, params.partyId, type]);
+
+  useEffect(() => {
+    if (accessToken && type) {
+      void Promise.all([getPartyRoles(type, params.partyId, accessToken), listRoles(accessToken)])
+        .then(([roles, definitions]) => { setPartyRoleData(roles); setAvailableRoles(definitions); })
+        .catch(() => undefined);
     }
   }, [accessToken, params.partyId, type]);
 
@@ -74,7 +88,10 @@ export default function PartyDetailPage() {
     setConfirmationAction(undefined);
 
     try {
-      if (action === "DELETE") {
+      if (action === "REVOKE_ROLE") {
+        setPartyRoleData(await revokePartyRole(type, params.partyId, assignmentIdToRevoke, reason, accessToken));
+        setOutcome({ variant: "success", title: "Role revoked", message: "The role has been revoked from this party.", actionLabel: "Continue" });
+      } else if (action === "DELETE") {
         await deleteParty(type, params.partyId, reason, accessToken);
         setOutcome({
           variant: "success",
@@ -101,10 +118,21 @@ export default function PartyDetailPage() {
     } catch (error) {
       setOutcome({
         variant: "error",
-        title: action === "DELETE" ? "Unable to delete party" : "Unable to change party status",
+        title: action === "DELETE" ? "Unable to delete party" : action === "REVOKE_ROLE" ? "Unable to revoke role" : "Unable to change party status",
         message: error instanceof Error ? error.message : "Please try again.",
         actionLabel: "Close",
       });
+    }
+  };
+
+  const assignSelectedRole = async () => {
+    if (!accessToken || !type || !roleIdToAssign) return;
+    try {
+      setPartyRoleData(await assignPartyRole(type, params.partyId, roleIdToAssign, accessToken));
+      setRoleIdToAssign("");
+      setOutcome({ variant: "success", title: "Role assigned", message: "The party's effective permissions have been updated.", actionLabel: "Continue" });
+    } catch (error) {
+      setOutcome({ variant: "error", title: "Unable to assign role", message: error instanceof Error ? error.message : "Please try again.", actionLabel: "Close" });
     }
   };
 
@@ -129,10 +157,14 @@ export default function PartyDetailPage() {
   const organization = party.organization;
   const isSuspended = party.status === "SUSPENDED";
   const isActive = party.status === "ACTIVE";
+  const assignedRoleIds = new Set(partyRoleData.roles.map((assignment) => assignment.role.name));
+  const assignableRoles = availableRoles.filter((role) => role.status === "ACTIVE" && !assignedRoleIds.has(role.name));
   const confirmationDetails = confirmationAction === "DELETE"
     ? { variant: "danger" as const, title: "Are you sure you want to delete this party?", message: "This action cannot be undone.", reasonLabel: "Reason for deletion", confirmLabel: "Yes, delete" }
     : confirmationAction === "SUSPEND"
       ? { variant: "warning" as const, title: "Are you sure you want to suspend this party?", message: "The party cannot be edited until it is unsuspended.", reasonLabel: "Reason for suspension", confirmLabel: "Yes, suspend" }
+      : confirmationAction === "REVOKE_ROLE"
+        ? { variant: "danger" as const, title: "Are you sure you want to revoke this role?", message: "The party will no longer receive permissions from this role.", reasonLabel: "Reason for revocation", confirmLabel: "Yes, revoke" }
       : { variant: "warning" as const, title: "Are you sure you want to unsuspend this party?", message: "The party will become active and can be managed again.", reasonLabel: "Reason for unsuspension", confirmLabel: "Yes, unsuspend" };
 
   return (
@@ -174,6 +206,12 @@ export default function PartyDetailPage() {
           <button className="delete-party-button" onClick={() => setConfirmationAction("DELETE")} type="button">Delete party</button>
         </div>
       </form>
+      <section className="form-card">
+        <h2>Roles and permissions</h2>
+        {isActive && <div className="party-form-actions"><select onChange={(event) => setRoleIdToAssign(event.target.value)} value={roleIdToAssign}><option value="">Select a role</option>{assignableRoles.map((role) => <option key={role.id} value={role.id}>{role.name}</option>)}</select><button disabled={!roleIdToAssign} onClick={() => void assignSelectedRole()} type="button">Assign role</button></div>}
+        <div><h3>Active roles</h3>{partyRoleData.roles.length ? partyRoleData.roles.map((assignment) => <div className="party-card" key={assignment.id}><strong>{assignment.role.name}</strong><button className="delete-party-button" onClick={() => { setAssignmentIdToRevoke(assignment.id); setConfirmationAction("REVOKE_ROLE"); }} type="button">Revoke role</button></div>) : <p className="field-help">No roles are assigned.</p>}</div>
+        <div><h3>Effective permissions</h3>{partyRoleData.effectivePermissions.length ? <p>{partyRoleData.effectivePermissions.map((permission) => permission.name).join(", ")}</p> : <p className="field-help">No active permissions.</p>}</div>
+      </section>
       {confirmationAction && (
         <ConfirmationModal
           cancelLabel="No, cancel"
