@@ -1,0 +1,2 @@
+.party-select-button { color: #17213a !important; background: #fff !important; }.party-select-button:hover:not(:disabled) { background: #f1f2ff !important; }.party-select-button:focus-visible { outline: 2px solid #3f42dc; outline-offset: -2px; }
+.party-select-button.is-selected { background: #e9edff !important; box-shadow: inset 3px 0 0 #3f42dc !important; }

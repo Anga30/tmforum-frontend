@@ -23,7 +23,18 @@ export type AdminRegistrationInput = {
 
 export type AdminRegistrationResponse = { account: AdminAccount; partyId: string };
 export type AdminLoginResponse = { accessToken: string; expiresAt: string; account: AdminAccount };
+export type AdminIndividualProfile = {
+  givenName: string;
+  middleName: string | null;
+  familyName: string;
+  birthDate: string | null;
+  gender: string | null;
+  nationality: string | null;
+  phone: string | null;
+  address: string | null;
+};
 export type AdminSession = {
   account: AdminAccount;
+  individual: AdminIndividualProfile;
   session: { id: string; adminAccountId: string; expiresAt: string; revokedAt: string | null; createdAt: string };
 };

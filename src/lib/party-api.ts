@@ -1,8 +1,9 @@
 import { apiClient } from "@/lib/api-client";
-import type { Party, PartyInput, PartyRoleData, PartyType } from "@/types/party.types";
+import type { PaginatedParties, Party, PartyInput, PartyRoleData, PartyType } from "@/types/party.types";
 
 const options = (token: string, method = "GET", body?: object): RequestInit => ({ method, headers: { Authorization: `Bearer ${token}` }, body: body ? JSON.stringify(body) : undefined });
-export const listParties = (type: PartyType, token: string): Promise<Party[]> => apiClient(`party-management/${type === "INDIVIDUAL" ? "individual" : "organization"}`, options(token));
+export const listParties = (type: PartyType, token: string, limit = 10, offset = 0): Promise<PaginatedParties> => apiClient(`party-management/${type === "INDIVIDUAL" ? "individual" : "organization"}?limit=${limit}&offset=${offset}`, options(token));
+export const listAllParties = (token: string, limit = 10, offset = 0): Promise<PaginatedParties> => apiClient(`party-management/parties?limit=${limit}&offset=${offset}`, options(token));
 export const createParty = (type: PartyType, input: PartyInput, token: string): Promise<Party> => apiClient(`party-management/${type === "INDIVIDUAL" ? "individual" : "organization"}`, options(token, "POST", input));
 export const verifyPartyEmail = (token: string): Promise<Party> => apiClient("party-management/verify-email", { method: "POST", body: JSON.stringify({ token }) });
 export const getParty = (type: PartyType, id: string, token: string): Promise<Party> => apiClient(`party-management/${type === "INDIVIDUAL" ? "individual" : "organization"}/${id}`, options(token));

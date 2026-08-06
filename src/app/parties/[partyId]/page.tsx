@@ -1,11 +1,14 @@
 "use client";
 
+import "../../party-detail.css";
+
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 import { ConfirmationModal } from "@/components/feedback/confirmation-modal";
 import { OutcomeModal } from "@/components/feedback/outcome-modal";
+import { AppShell } from "@/components/layout/app-shell";
 import { useAdminSessionGuard } from "@/hooks/use-admin-session-guard";
 import { assignPartyRole, deleteParty, getParty, getPartyRoles, revokePartyRole, suspendParty, unsuspendParty, updateParty } from "@/lib/party-api";
 import { listRoles } from "@/lib/access-control-api";
@@ -168,11 +171,11 @@ export default function PartyDetailPage() {
       : { variant: "warning" as const, title: "Are you sure you want to unsuspend this party?", message: "The party will become active and can be managed again.", reasonLabel: "Reason for unsuspension", confirmLabel: "Yes, unsuspend" };
 
   return (
-    <main className="page-shell">
-      <Link className="back-link" href="/parties">Back to parties</Link>
-      <h1>{individual?.displayName ?? organization?.legalName}</h1>
+    <AppShell eyebrow="Party management" title={individual?.displayName ?? organization?.legalName ?? "Party"} subtitle={party.partyType === "ORGANIZATION" ? "Organization" : "Individual"}>
+      <Link className="back-link" href="/parties">← Back to parties</Link>
+      <section className="party-detail-header"><span className={`status-chip status-chip--${party.status.toLowerCase()}`}>{party.status.replaceAll("_", " ")}</span><span>{party.email?.value}</span></section>
       {isSuspended ? <p className="error">This party is suspended and cannot be edited.</p> : <p className="field-help">Changing the email address requires the new email address to be verified.</p>}
-      <form className="form-card" onSubmit={(event) => void submit(event)}>
+      <form className="form-card party-detail-card" onSubmit={(event) => void submit(event)}>
         <fieldset disabled={isSuspended}>
           {type === "INDIVIDUAL" ? (
             <div className="field-grid">
@@ -206,7 +209,7 @@ export default function PartyDetailPage() {
           <button className="delete-party-button" onClick={() => setConfirmationAction("DELETE")} type="button">Delete party</button>
         </div>
       </form>
-      <section className="form-card">
+      <section className="form-card party-detail-card">
         <h2>Roles and permissions</h2>
         {isActive && <div className="party-form-actions"><select onChange={(event) => setRoleIdToAssign(event.target.value)} value={roleIdToAssign}><option value="">Select a role</option>{assignableRoles.map((role) => <option key={role.id} value={role.id}>{role.name}</option>)}</select><button disabled={!roleIdToAssign} onClick={() => void assignSelectedRole()} type="button">Assign role</button></div>}
         <div><h3>Active roles</h3>{partyRoleData.roles.length ? partyRoleData.roles.map((assignment) => <div className="party-card" key={assignment.id}><strong>{assignment.role.name}</strong><button className="delete-party-button" onClick={() => { setAssignmentIdToRevoke(assignment.id); setConfirmationAction("REVOKE_ROLE"); }} type="button">Revoke role</button></div>) : <p className="field-help">No roles are assigned.</p>}</div>
@@ -239,6 +242,6 @@ export default function PartyDetailPage() {
           variant={outcome.variant}
         />
       )}
-    </main>
+    </AppShell>
   );
 }

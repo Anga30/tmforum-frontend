@@ -7,6 +7,22 @@ export type Permission = {
   status: "ACTIVE" | "INACTIVE" | "DELETED";
 };
 
+export type PermissionActionOption = {
+  value: string;
+  label: string;
+};
+
+export type PermissionResourceOption = {
+  value: string;
+  label: string;
+  function: string;
+  actions: PermissionActionOption[];
+};
+
+export type PermissionCatalog = {
+  resources: PermissionResourceOption[];
+};
+
 export type PermissionSet = {
   id: string;
   name: string;

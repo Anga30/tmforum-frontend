@@ -1,0 +1,4 @@
+.party-pagination { display: flex; align-items: center; justify-content: flex-end; gap: .45rem; padding: .75rem; border-top: 1px solid #dce0ea; color: #69738e; font-size: .72rem; }
+.party-pagination button { min-width: 4.8rem; padding: .45rem .65rem; border: 1px solid #d5d9e4; border-radius: 0; color: #4e5b7c; background: #fff; box-shadow: none; font-size: .72rem; font-weight: 700; }
+.party-pagination button:hover:not(:disabled) { border-color: #3f42dc; color: #3f42dc; background: #f1f2ff; transform: none; box-shadow: none; }
+.party-pagination button:disabled { color: #a2aabd; border-color: #e4e7ee; background: #f7f8fb; cursor: not-allowed; opacity: 1; }
