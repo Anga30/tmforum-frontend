@@ -1,0 +1,1 @@
+.panel-management-form > label:last-of-type { grid-column: 1 / -1; }.panel-management-form > button:nth-last-child(3), .panel-management-form > button:nth-last-child(2), .panel-management-form > button:last-child { grid-column: span 2 !important; }

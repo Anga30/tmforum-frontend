@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 
+import { AppShell } from "@/components/layout/app-shell";
 import { useAdminSessionGuard } from "@/hooks/use-admin-session-guard";
+
+const accessAreas = [
+  { href: "/access-control/permissions", title: "Permissions", description: "Define the individual actions the system can authorize." },
+  { href: "/access-control/permission-sets", title: "Permission sets", description: "Group related permissions into reusable access bundles." },
+  { href: "/access-control/roles", title: "Roles", description: "Attach a permission set to a business responsibility." },
+];
 
 export default function AccessControlPage() {
   const { session, isLoading } = useAdminSessionGuard();
@@ -10,18 +17,17 @@ export default function AccessControlPage() {
   if (isLoading || !session) return <main className="page-shell"><p>Checking your session...</p></main>;
 
   return (
-    <main className="page-shell">
-      <Link className="back-link" href="/">Back</Link>
-      <div className="page-intro">
-        <p className="eyebrow">Access control</p>
-        <h1>Manage access control</h1>
-        <p>Create permissions, group them into permission sets, and attach those sets to business roles.</p>
-      </div>
-      <nav aria-label="Access control actions" className="link-list">
-        <Link href="/access-control/permissions">Manage permissions</Link>
-        <Link href="/access-control/permission-sets">Manage permission sets</Link>
-        <Link href="/access-control/roles">Manage roles</Link>
-      </nav>
-    </main>
+    <AppShell eyebrow="Access control" title="Access control" subtitle="Define and manage access rules">
+      <section className="access-area-grid">
+        {accessAreas.map((area, index) => (
+          <Link className="access-area-card" href={area.href} key={area.href}>
+            <span className="access-area-number">0{index + 1}</span>
+            <h2>{area.title}</h2>
+            <p>{area.description}</p>
+            <span className="access-area-link">Manage →</span>
+          </Link>
+        ))}
+      </section>
+    </AppShell>
   );
 }

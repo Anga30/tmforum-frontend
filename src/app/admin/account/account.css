@@ -1,0 +1,61 @@
+.admin-account {
+  display: grid;
+  gap: 1.25rem;
+  max-width: 68rem;
+}
+
+.admin-account__hero {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.4rem;
+  border: 1px solid #dfe3ee;
+  background: #fff;
+}
+
+.admin-account__avatar {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  place-items: center;
+  color: #fff;
+  background: #3f42dc;
+  font-weight: 800;
+}
+
+.admin-account__hero h2 { margin: .15rem 0; font-size: 1.25rem; }
+.admin-account__hero p { margin: 0; color: #617095; font-size: .9rem; }
+
+.admin-account__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.admin-account__section {
+  padding: 1.35rem;
+  border: 1px solid #dfe3ee;
+  background: #fff;
+}
+
+.admin-account__section h2 {
+  margin: 0 0 1rem;
+  color: #43527a;
+  font-size: .76rem;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.admin-account__details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin: 0; }
+.admin-account__details div { min-width: 0; }
+.admin-account__details dt { margin-bottom: .3rem; color: #647190; font-size: .72rem; letter-spacing: .04em; text-transform: uppercase; }
+.admin-account__details dd { margin: 0; color: #17213b; font-weight: 600; overflow-wrap: anywhere; }
+.admin-account__details .admin-account__wide { grid-column: 1 / -1; }
+
+.admin-account__status { color: #14835e; }
+.admin-account__signout { width: fit-content; border-radius: 0; box-shadow: none; }
+
+@media (max-width: 720px) {
+  .admin-account__grid,
+  .admin-account__details { grid-template-columns: 1fr; }
+}
